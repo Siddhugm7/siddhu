@@ -1,0 +1,5 @@
+{
+  "name": "Fancy Flap Bird",
+  "description": "A high-fidelity Flappy Bird clone featuring the 'Agent Bird' with a hat, pixelated environments, and smooth performance using React and Canvas.",
+  "requestFramePermissions": []
+}
