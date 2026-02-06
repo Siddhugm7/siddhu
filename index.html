@@ -3,19 +3,67 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fancy Flap Bird</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  
+  <!-- Primary Meta Tags -->
+  <title>Agent Flap | Fullscreen Bird Game</title>
+  <meta name="title" content="Agent Flap | Fullscreen Bird Game">
+  <meta name="description" content="A high-fidelity Flappy Bird clone built with React. Play the ultimate Agent Flap game in your browser.">
+  <meta name="theme-color" content="#0f172a">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://agent-flap.example.com/">
+  <meta property="og:title" content="Agent Flap | Fullscreen Bird Game">
+  <meta property="og:description" content="Flap your way through pipes in this pixel-perfect arcade experience.">
+  <meta property="og:image" content="https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/message.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:title" content="Agent Flap | Fullscreen Bird Game">
+  <meta property="twitter:description" content="Play Agent Flap now in your browser!">
+  
+  <!-- Mobile Web App Settings -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-    body {
+    
+    html, body {
       margin: 0;
       padding: 0;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      font-family: 'Press+Start+2P', cursive;
+      background-color: #0f172a;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      position: fixed;
     }
+
+    #root {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     canvas {
       image-rendering: pixelated;
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      background-color: #4ec0ca;
+    }
+
+    /* Remove tap highlight on mobile */
+    * {
+      -webkit-tap-highlight-color: transparent;
     }
   </style>
 <script type="importmap">
@@ -23,12 +71,15 @@
   "imports": {
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4"
+    "react": "https://esm.sh/react@^19.2.4",
+    "@google/genai": "https://esm.sh/@google/genai",
+    "vite": "https://esm.sh/vite@^7.3.1"
   }
 }
 </script>
 </head>
-<body class="bg-sky-400">
+<body>
   <div id="root"></div>
+  <script type="module" src="index.tsx"></script>
 </body>
 </html>

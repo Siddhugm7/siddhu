@@ -1,5 +1,7 @@
 {
-  "name": "Fancy Flap Bird",
-  "description": "A high-fidelity Flappy Bird clone featuring the 'Agent Bird' with a hat, pixelated environments, and smooth performance using React and Canvas.",
+  "name": "Agent Flap Online",
+  "short_name": "Agent Flap",
+  "description": "The ultimate browser-based Flappy Bird clone with responsive fullscreen support.",
+  "version": "1.0.0",
   "requestFramePermissions": []
 }

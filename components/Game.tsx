@@ -30,8 +30,8 @@ const Game: React.FC = () => {
     y: CANVAS_HEIGHT / 2,
     velocity: 0,
     rotation: 0,
-    width: 54,  
-    height: 38 
+    width: 48,  
+    height: 34 
   });
   
   const pipes = useRef<Pipe[]>([]);
@@ -39,15 +39,19 @@ const Game: React.FC = () => {
   const animationFrameId = useRef<number | undefined>(undefined);
   const bgX = useRef(0);
 
-  // Initialize Assets with explicit loading checks
   useEffect(() => {
-    const birdImage = new Image();
-    birdImage.src = AGENT_BIRD_SRC;
-    birdImage.onload = () => { birdImg.current = birdImage; };
+    const loadImg = (src: string) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = src;
+      return img;
+    };
 
-    const bgImage = new Image();
-    bgImage.src = ASSETS.BACKGROUND;
-    bgImage.onload = () => { bgImg.current = bgImage; };
+    const bImg = loadImg(AGENT_BIRD_SRC);
+    bImg.onload = () => { birdImg.current = bImg; };
+
+    const background = loadImg(ASSETS.BACKGROUND);
+    background.onload = () => { bgImg.current = background; };
   }, []);
 
   const resetGame = useCallback(() => {
@@ -55,8 +59,8 @@ const Game: React.FC = () => {
       y: CANVAS_HEIGHT / 2,
       velocity: 0,
       rotation: 0,
-      width: 54,
-      height: 38
+      width: 48,
+      height: 34
     };
     pipes.current = [];
     frameCount.current = 0;
@@ -64,7 +68,11 @@ const Game: React.FC = () => {
     setGameState(GameStatus.PLAYING);
   }, []);
 
-  const flap = useCallback(() => {
+  const flap = useCallback((e?: React.MouseEvent | React.TouchEvent | KeyboardEvent) => {
+    if (e && 'preventDefault' in e) {
+      e.preventDefault();
+    }
+    
     if (gameState === GameStatus.START) {
       resetGame();
     } else if (gameState === GameStatus.PLAYING) {
@@ -77,8 +85,7 @@ const Game: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' || e.code === 'ArrowUp') {
-        e.preventDefault();
-        flap();
+        flap(e);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -87,7 +94,6 @@ const Game: React.FC = () => {
 
   const drawPipe = (ctx: CanvasRenderingContext2D, pipe: Pipe) => {
     const renderPipePart = (x: number, y: number, w: number, h: number, isTop: boolean) => {
-      // Procedural HD Pipe rendering
       const gradient = ctx.createLinearGradient(x, y, x + w, y);
       gradient.addColorStop(0, '#55a02e');
       gradient.addColorStop(0.3, '#73bf2e');
@@ -110,10 +116,6 @@ const Game: React.FC = () => {
       ctx.fillStyle = gradient;
       ctx.fillRect(lipX, lipY, lipW, lipHeight);
       ctx.strokeRect(lipX, lipY, lipW, lipHeight);
-      
-      // Highlight shine
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.fillRect(lipX + 10, lipY + 4, 4, lipHeight - 8);
     };
 
     renderPipePart(pipe.x, 0, PIPE_WIDTH, pipe.topHeight, true);
@@ -128,19 +130,14 @@ const Game: React.FC = () => {
 
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // DRAW BACKGROUND
-    if (bgImg.current) {
+    // BACKGROUND
+    if (bgImg.current && bgImg.current.complete) {
       bgX.current -= 1;
       if (bgX.current <= -CANVAS_WIDTH) bgX.current = 0;
-      // Draw two backgrounds for seamless scrolling
       ctx.drawImage(bgImg.current, bgX.current, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       ctx.drawImage(bgImg.current, bgX.current + CANVAS_WIDTH, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     } else {
-      // Fallback sky gradient
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-      skyGrad.addColorStop(0, '#4ec0ca');
-      skyGrad.addColorStop(1, '#dff6f5');
-      ctx.fillStyle = skyGrad;
+      ctx.fillStyle = '#4ec0ca';
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     }
 
@@ -148,21 +145,16 @@ const Game: React.FC = () => {
       bird.current.velocity += GRAVITY;
       bird.current.y += bird.current.velocity;
       
-      const targetRotation = Math.min(Math.PI / 3, Math.max(-Math.PI / 6, bird.current.velocity * 0.12));
-      bird.current.rotation += (targetRotation - bird.current.rotation) * 0.15;
+      const targetRotation = Math.min(Math.PI / 3, Math.max(-Math.PI / 6, bird.current.velocity * 0.1));
+      bird.current.rotation += (targetRotation - bird.current.rotation) * 0.1;
 
       if (bird.current.y + bird.current.height / 2 >= CANVAS_HEIGHT) {
         setGameState(GameStatus.GAME_OVER);
       }
-      if (bird.current.y <= 0) {
-        bird.current.y = 0;
-        bird.current.velocity = 0;
-      }
+      if (bird.current.y <= 0) bird.current.y = 0;
 
       if (frameCount.current % PIPE_SPAWN_RATE === 0) {
-        const minHeight = 100;
-        const maxHeight = CANVAS_HEIGHT - PIPE_GAP - 150;
-        const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+        const topHeight = Math.random() * (CANVAS_HEIGHT - PIPE_GAP - 200) + 100;
         pipes.current.push({ x: CANVAS_WIDTH, topHeight, passed: false });
       }
 
@@ -172,76 +164,50 @@ const Game: React.FC = () => {
 
         const bx = 80;
         const by = bird.current.y;
-        const bw = 34; 
-        const bh = 24;
-
-        if (bx + bw / 2 > p.x && bx - bw / 2 < p.x + PIPE_WIDTH) {
-          if (by - bh / 2 < p.topHeight || by + bh / 2 > p.topHeight + PIPE_GAP) {
+        if (bx + 15 > p.x && bx - 15 < p.x + PIPE_WIDTH) {
+          if (by - 12 < p.topHeight || by + 12 > p.topHeight + PIPE_GAP) {
             setGameState(GameStatus.GAME_OVER);
           }
         }
 
         if (!p.passed && p.x + PIPE_WIDTH < bx) {
           p.passed = true;
-          setScore(prev => {
-            const newScore = prev + 1;
-            if (newScore > highScore) {
-              setHighScore(newScore);
-              localStorage.setItem('flap_highscore', newScore.toString());
+          setScore(s => {
+            const next = s + 1;
+            if (next > highScore) {
+              setHighScore(next);
+              localStorage.setItem('flap_highscore', next.toString());
             }
-            return newScore;
+            return next;
           });
         }
-
-        if (p.x + PIPE_WIDTH < -100) {
-          pipes.current.splice(i, 1);
-        }
+        if (p.x + PIPE_WIDTH < -100) pipes.current.splice(i, 1);
       }
-
       frameCount.current++;
     }
 
     pipes.current.forEach(p => drawPipe(ctx, p));
 
-    // DRAW BIRD
+    // BIRD
     ctx.save();
     ctx.translate(80, bird.current.y);
     ctx.rotate(bird.current.rotation);
-    if (birdImg.current) {
-      ctx.drawImage(
-        birdImg.current, 
-        -bird.current.width / 2, 
-        -bird.current.height / 2, 
-        bird.current.width, 
-        bird.current.height
-      );
+    if (birdImg.current && birdImg.current.complete) {
+      ctx.drawImage(birdImg.current, -bird.current.width/2, -bird.current.height/2, bird.current.width, bird.current.height);
     } else {
-      // Fallback bird
-      ctx.beginPath();
-      ctx.fillStyle = '#f8d305';
-      ctx.arc(0, 0, 18, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'white';
-      ctx.fillRect(8, -8, 8, 8);
-      ctx.fillStyle = 'red';
-      ctx.fillRect(8, 2, 12, 6);
+      ctx.fillStyle = 'yellow';
+      ctx.fillRect(-15, -15, 30, 30);
     }
     ctx.restore();
 
-    // UI OVERLAYS
+    // UI Overlay
     if (gameState === GameStatus.START) {
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       ctx.fillStyle = 'white';
       ctx.textAlign = 'center';
-      ctx.font = '24px "Press Start 2P"';
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 6;
-      ctx.strokeText('FLAP READY', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 40);
-      ctx.fillText('FLAP READY', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 40);
-      
-      ctx.font = '10px "Press Start 2P"';
-      ctx.fillText('TAP OR SPACE TO START', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20);
+      ctx.font = '16px "Press Start 2P"';
+      ctx.fillText('TAP TO START', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
     }
 
     if (gameState === GameStatus.GAME_OVER) {
@@ -249,17 +215,11 @@ const Game: React.FC = () => {
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       ctx.fillStyle = 'white';
       ctx.textAlign = 'center';
-      ctx.font = '24px "Press Start 2P"';
-      ctx.strokeStyle = '#800000';
-      ctx.lineWidth = 4;
-      ctx.strokeText('CRASHED!', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 80);
-      ctx.fillText('CRASHED!', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 80);
-      
+      ctx.font = '20px "Press Start 2P"';
+      ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 50);
       ctx.font = '14px "Press Start 2P"';
-      ctx.fillStyle = '#FFD700';
-      ctx.fillText(`SCORE: ${score}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 10);
-      ctx.fillStyle = 'white';
-      ctx.fillText(`BEST: ${highScore}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 30);
+      ctx.fillText(`SCORE: ${score}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 10);
+      ctx.fillText(`BEST: ${highScore}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 50);
       ctx.font = '10px "Press Start 2P"';
       ctx.fillText('TAP TO RETRY', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 100);
     }
@@ -267,11 +227,11 @@ const Game: React.FC = () => {
     if (gameState === GameStatus.PLAYING) {
       ctx.fillStyle = 'white';
       ctx.textAlign = 'center';
-      ctx.font = '42px "Press Start 2P"';
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-      ctx.lineWidth = 8;
-      ctx.strokeText(score.toString(), CANVAS_WIDTH / 2, 100);
-      ctx.fillText(score.toString(), CANVAS_WIDTH / 2, 100);
+      ctx.font = '36px "Press Start 2P"';
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 4;
+      ctx.strokeText(score.toString(), CANVAS_WIDTH / 2, 80);
+      ctx.fillText(score.toString(), CANVAS_WIDTH / 2, 80);
     }
 
     animationFrameId.current = requestAnimationFrame(update);
@@ -285,12 +245,13 @@ const Game: React.FC = () => {
   }, [gameState, score, highScore]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={CANVAS_WIDTH}
-      height={CANVAS_HEIGHT}
-      onClick={flap}
-      className="cursor-pointer block"
+    <canvas 
+      ref={canvasRef} 
+      width={CANVAS_WIDTH} 
+      height={CANVAS_HEIGHT} 
+      onMouseDown={(e) => flap(e as unknown as React.MouseEvent)}
+      onTouchStart={(e) => flap(e as unknown as React.TouchEvent)}
+      className="cursor-pointer" 
     />
   );
 };
