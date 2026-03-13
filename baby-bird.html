@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Baby Bird - Fly High!</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #4ec0ca;
+            font-family: 'Arial', sans-serif;
+            touch-action: none;
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            display: block;
+            background-color: #4ec0ca;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .score-board {
+            position: absolute;
+            top: 20px;
+            width: 90%;
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .stats-left {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        #game-over-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0,0,0,0.85);
+            padding: 30px;
+            border-radius: 15px;
+            pointer-events: auto;
+            position: absolute;
+            z-index: 10;
+            width: 300px;
+            text-align: center;
+        }
+        h1 { font-size: 32px; margin: 0 0 20px 0; color: #ff4444; }
+        .final-stats { font-size: 18px; margin-bottom: 20px; text-align: center; }
+        .btn {
+            padding: 12px 30px;
+            font-size: 20px;
+            background: #e67e22;
+            color: #fff;
+            border: 4px solid #fff;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            box-shadow: 0 6px 0 #d35400, 0 10px 20px rgba(0,0,0,0.3);
+            transition: all 0.1s;
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 180px;
+        }
+        .btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #d35400, 0 5px 10px rgba(0,0,0,0.2);
+        }
+        #retry-btn {
+            background: linear-gradient(to bottom, #e67e22, #d35400);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui-layer">
+        <div class="score-board">
+            <div class="stats-left">
+                <div>Score: <span id="score">0</span></div>
+                <div>Coins: <span id="coins">0</span></div>
+                <div>Super: <span id="superCoins">0</span></div>
+            </div>
+            <div>Best: <span id="highScore">0</span></div>
+        </div>
+
+        <!-- Screens -->
+        <div id="game-over-screen">
+            <h1>GAME OVER</h1>
+            <div class="final-stats">
+                <div>Final Score: <span id="finalScore">0</span></div>
+                <div>Coins: <span id="finalCoins">0</span></div>
+            </div>
+            <button id="retry-btn" class="btn">RETRY</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score'), coinsEl = document.getElementById('coins'), superCoinsEl = document.getElementById('superCoins'), highScoreEl = document.getElementById('highScore');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const finalScoreEl = document.getElementById('finalScore'), finalCoinsEl = document.getElementById('finalCoins'), retryBtn = document.getElementById('retry-btn');
+
+    // Game Constants
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 450;
+    let GRAVITY = 0.15, JUMP_STRENGTH = -5.5, PIPE_SPEED = 2.2, PIPE_GAP = 170, SPAWN_RATE = 130;
+
+    const CHARACTERS = [
+        { id: 'FLYBIRD', name: 'FLYBIRD', color: '#e74c3c', price: 0 }
+    ];
+
+    // Game State
+    let bird, pipes, coins, score, coinCount, superCoinCount, highScore, gameActive, frameCount, bgColor;
+    let settings = { music: true, vibration: true, effects: true };
+    
+    let audioCtx;
+    function playSound(freq, type = 'sine', duration = 0.1, isEffect = true) {
+        const enabled = isEffect ? settings.effects : settings.music;
+        if (!enabled) return;
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function triggerVibration() {
+        if (settings.vibration && navigator.vibrate) navigator.vibrate(50);
+    }
+
+    function init() {
+        canvas.width = CANVAS_WIDTH; canvas.height = CANVAS_HEIGHT;
+        highScore = localStorage.getItem('babybird_highscore') || 0;
+        coinCount = parseInt(localStorage.getItem('babybird_coins')) || 0;
+        superCoinCount = parseInt(localStorage.getItem('babybird_super_coins')) || 0;
+        highScoreEl.innerText = highScore;
+        coinsEl.innerText = coinCount;
+        superCoinsEl.innerText = superCoinCount;
+
+        // Daily Reward
+        const lastReward = localStorage.getItem('babybird_last_reward');
+        const today = new Date().toDateString();
+        if (lastReward !== today) {
+            coinCount += 10;
+            localStorage.setItem('babybird_last_reward', today);
+            localStorage.setItem('babybird_coins', coinCount);
+            alert('Daily Reward: +10 Coins!');
+        }
+        reset();
+    }
+
+    function reset() {
+        bird = { x: 80, y: CANVAS_HEIGHT / 2, velocity: 0, width: 34, height: 24, rotation: 0 };
+        pipes = []; coins = []; score = 0; frameCount = 0; gameActive = true; bgColor = '#4ec0ca';
+        scoreEl.innerText = '0';
+        gameOverScreen.style.display = 'none';
+        canvas.style.backgroundColor = bgColor;
+    }
+
+    function jump() {
+        if (!gameActive) return;
+        bird.velocity = JUMP_STRENGTH;
+        playSound(400, 'square');
+    }
+
+    function spawnPipe() {
+        const minHeight = 50;
+        const maxHeight = CANVAS_HEIGHT - PIPE_GAP - minHeight - 50;
+        const topHeight = Math.floor(Math.random() * maxHeight) + minHeight;
+        pipes.push({ x: CANVAS_WIDTH, topHeight, passed: false });
+        
+        const isSuper = Math.random() < 0.1;
+        coins.push({ x: CANVAS_WIDTH + 35, y: topHeight + PIPE_GAP / 2, collected: false, isSuper });
+    }
+
+    function gameOver() {
+        gameActive = false;
+        triggerVibration();
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('babybird_highscore', highScore);
+            highScoreEl.innerText = highScore;
+        }
+        finalScoreEl.innerText = score;
+        finalCoinsEl.innerText = coinCount;
+        gameOverScreen.style.display = 'flex';
+        playSound(100, 'sawtooth', 0.3);
+    }
+
+    function gameLoop() {
+        if (gameActive) {
+            bird.velocity += GRAVITY; bird.y += bird.velocity;
+            bird.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, bird.velocity * 0.1));
+            if (bird.y + bird.height > CANVAS_HEIGHT || bird.y < 0) gameOver();
+            if (frameCount % SPAWN_RATE === 0) spawnPipe();
+
+            for (let i = pipes.length - 1; i >= 0; i--) {
+                let p = pipes[i]; p.x -= PIPE_SPEED;
+                if (bird.x + bird.width > p.x && bird.x < p.x + 70) {
+                    if (bird.y < p.topHeight || bird.y + bird.height > p.topHeight + PIPE_GAP) gameOver();
+                }
+                if (!p.passed && p.x + 70 < bird.x) {
+                    p.passed = true; score++; scoreEl.innerText = score; playSound(800);
+                }
+                if (p.x < -100) pipes.splice(i, 1);
+            }
+
+            for (let i = coins.length - 1; i >= 0; i--) {
+                let c = coins[i]; c.x -= PIPE_SPEED;
+                const dx = bird.x + bird.width/2 - c.x, dy = bird.y + bird.height/2 - c.y, dist = Math.sqrt(dx*dx + dy*dy);
+                if (!c.collected && dist < 30) {
+                    c.collected = true;
+                    if (c.isSuper) { superCoinCount++; superCoinsEl.innerText = superCoinCount; localStorage.setItem('babybird_super_coins', superCoinCount); }
+                    else { coinCount++; coinsEl.innerText = coinCount; localStorage.setItem('babybird_coins', coinCount); }
+                    playSound(1200);
+                }
+                if (c.x < -50) coins.splice(i, 1);
+            }
+            frameCount++;
+        }
+        draw(); requestAnimationFrame(gameLoop);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        pipes.forEach(p => { ctx.fillStyle = '#2ecc71'; ctx.fillRect(p.x, 0, 70, p.topHeight); ctx.fillRect(p.x, p.topHeight + PIPE_GAP, 70, CANVAS_HEIGHT); });
+        coins.forEach(c => { if (c.collected) return; ctx.beginPath(); ctx.arc(c.x, c.y, 12, 0, Math.PI * 2); ctx.fillStyle = c.isSuper ? '#f39c12' : '#f1c40f'; ctx.fill(); });
+        
+        const currentChar = CHARACTERS[0];
+        ctx.save(); ctx.translate(bird.x + bird.width/2, bird.y + bird.height/2); ctx.rotate(bird.rotation); 
+        ctx.fillStyle = currentChar ? currentChar.color : '#f39c12'; 
+        ctx.fillRect(-bird.width/2, -bird.height/2, bird.width, bird.height); ctx.restore();
+    }
+
+    window.addEventListener('keydown', (e) => { 
+        if (e.code === 'Space') jump();
+    });
+    canvas.addEventListener('mousedown', jump);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); });
+    retryBtn.addEventListener('click', reset);
+
+    init(); gameLoop();
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {
-  "name": "Agent Flap Online",
-  "short_name": "Agent Flap",
-  "description": "The ultimate browser-based Flappy Bird clone with responsive fullscreen support.",
+  "name": "FlyBird",
+  "short_name": "FlyBird",
+  "description": "A simple and fun bird flying game for mobile and web.",
   "version": "1.0.0",
   "requestFramePermissions": []
 }

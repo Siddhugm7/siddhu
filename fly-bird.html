@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fly Bird - Adventure in the Sky</title>
+    <style>
+        :root {
+            --primary-yellow: #f1c40f;
+            --secondary-yellow: #f39c12;
+            --sky-blue: #4ec0ca;
+            --white: #ffffff;
+            --dark: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--sky-blue);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--dark);
+            user-select: none;
+            touch-action: none;
+        }
+
+        #app-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Sky Background */
+        .sky-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #4ec0ca 0%, #dff1f2 100%);
+            z-index: -1;
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.8;
+            animation: moveClouds linear infinite;
+        }
+
+        .cloud::before, .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .cloud-1 { width: 100px; height: 40px; top: 15%; left: -150px; animation-duration: 25s; }
+        .cloud-1::before { width: 50px; height: 50px; top: -25px; left: 15px; }
+        .cloud-1::after { width: 40px; height: 40px; top: -15px; left: 45px; }
+
+        .cloud-2 { width: 150px; height: 60px; top: 40%; left: -200px; animation-duration: 35s; animation-delay: 5s; }
+        .cloud-2::before { width: 80px; height: 80px; top: -40px; left: 20px; }
+        .cloud-2::after { width: 60px; height: 60px; top: -30px; left: 70px; }
+
+        .cloud-3 { width: 120px; height: 45px; top: 70%; left: -180px; animation-duration: 30s; animation-delay: 12s; }
+        .cloud-3::before { width: 60px; height: 60px; top: -30px; left: 20px; }
+        .cloud-3::after { width: 50px; height: 50px; top: -20px; left: 55px; }
+
+        /* Flying Birds in Background */
+        .bg-bird {
+            position: absolute;
+            width: 20px;
+            height: 10px;
+            border-top: 2px solid rgba(255,255,255,0.5);
+            border-radius: 50% 50% 0 0;
+            animation: moveClouds linear infinite;
+        }
+
+        .bg-bird::after {
+            content: '';
+            position: absolute;
+            right: -18px;
+            width: 20px;
+            height: 10px;
+            border-top: 2px solid rgba(255,255,255,0.5);
+            border-radius: 50% 50% 0 0;
+        }
+
+        .bg-bird-1 { top: 20%; animation-duration: 15s; animation-delay: 2s; }
+        .bg-bird-2 { top: 50%; animation-duration: 18s; animation-delay: 8s; }
+        .bg-bird-3 { top: 80%; animation-duration: 20s; animation-delay: 4s; }
+
+        @keyframes moveClouds {
+            from { transform: translateX(-200px); }
+            to { transform: translateX(calc(100vw + 400px)); }
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 10;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+
+        /* Home Screen */
+        .game-title {
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--white);
+            text-shadow: 4px 4px 0px var(--secondary-yellow), 8px 8px 15px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .btn-play {
+            background: var(--primary-yellow);
+            color: var(--dark);
+            border: none;
+            padding: 1.5rem 4rem;
+            font-size: 1.8rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 var(--secondary-yellow), 0 15px 25px rgba(0,0,0,0.2);
+            transition: all 0.1s;
+            text-transform: uppercase;
+        }
+
+        .btn-play:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 var(--secondary-yellow), 0 10px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Settings Icon */
+        .btn-settings-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--white);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        /* Settings Panel */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            backdrop-filter: blur(5px);
+        }
+
+        .settings-panel {
+            background: var(--white);
+            width: 90%;
+            max-width: 400px;
+            border-radius: 30px;
+            padding: 2rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .settings-header {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: var(--dark);
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .setting-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-yellow);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .btn-secondary {
+            width: 100%;
+            background: #eee;
+            border: none;
+            padding: 1rem;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-close {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            background: #ff4444;
+            color: white;
+            border: 3px solid white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Privacy Policy Modal */
+        .privacy-modal {
+            max-height: 80vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .privacy-text {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #666;
+            text-align: left;
+        }
+
+        /* Game Canvas */
+        #gameCanvas {
+            display: block;
+            background-color: transparent;
+        }
+
+        /* Game Over UI */
+        .game-over-text {
+            font-size: 3rem;
+            color: #ff4444;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 0 white;
+        }
+
+        .score-display {
+            font-size: 2rem;
+            color: var(--white);
+            margin-bottom: 2rem;
+            font-weight: bold;
+        }
+
+        /* Bird Animation on Home */
+        .bird-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: birdFlap 0.5s steps(2) infinite;
+        }
+
+        @keyframes birdFlap {
+            from { transform: rotate(-5deg); }
+            to { transform: rotate(5deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <div class="sky-bg">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+        <div class="bg-bird bg-bird-1"></div>
+        <div class="bg-bird bg-bird-2"></div>
+        <div class="bg-bird bg-bird-3"></div>
+    </div>
+
+    <button class="btn-settings-toggle" id="openSettings">⚙️</button>
+
+    <!-- Home Screen -->
+    <div id="homeScreen" class="screen">
+        <div class="bird-icon">🐦</div>
+        <h1 class="game-title">Fly Bird</h1>
+        <button class="btn-play" id="playGame">Play Game</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen hidden">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="screen hidden">
+        <h2 class="game-over-text">GAME OVER</h2>
+        <div class="score-display">Score: <span id="finalScore">0</span></div>
+        <button class="btn-play" id="restartGame">Try Again</button>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay hidden">
+        <div class="settings-panel">
+            <button class="btn-close" id="closeSettings">X</button>
+            <div class="settings-header">Settings</div>
+            
+            <div class="setting-row">
+                <span class="setting-label">Sound Effects</span>
+                <label class="switch">
+                    <input type="checkbox" id="soundToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="setting-row">
+                <span class="setting-label">Background Music</span>
+                <label class="switch">
+                    <input type="checkbox" id="musicToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <button class="btn-secondary" id="openPrivacy">Privacy Policy</button>
+        </div>
+    </div>
+
+    <!-- Privacy Modal -->
+    <div id="privacyModal" class="modal-overlay hidden">
+        <div class="settings-panel privacy-modal">
+            <button class="btn-close" id="closePrivacy">X</button>
+            <div class="settings-header">Privacy Policy</div>
+            <div class="privacy-text">
+                <p><strong>1. Information We Collect</strong><br>
+                Fly Bird does not collect any personal information. We do not track your location, access your contacts, or store any data on our servers.</p>
+                
+                <p><strong>2. How We Use Information</strong><br>
+                Since we do not collect information, we do not use it for any purpose other than providing you with a fun gaming experience.</p>
+                
+                <p><strong>3. Third-Party Services</strong><br>
+                We do not use any third-party analytics or advertising services that track your behavior.</p>
+                
+                <p><strong>4. Changes to This Policy</strong><br>
+                We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page.</p>
+                
+                <p><strong>5. Contact Us</strong><br>
+                If you have any questions about this Privacy Policy, please contact us at support@flybird.example.com.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Audio System
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let musicOsc = null;
+    let musicGain = null;
+    let isMusicPlaying = false;
+
+    const settings = {
+        sound: true,
+        music: true
+    };
+
+    function playSound(freq, type = 'sine', duration = 0.1, volume = 0.1) {
+        if (!settings.sound) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    // Simple looping background music
+    const melody = [261.63, 293.66, 329.63, 349.23, 392.00, 349.23, 329.63, 293.66];
+    let melodyIndex = 0;
+
+    function startMusic() {
+        if (!settings.music || isMusicPlaying) return;
+        isMusicPlaying = true;
+        playNextNote();
+    }
+
+    function playNextNote() {
+        if (!settings.music || !isMusicPlaying) return;
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(melody[melodyIndex], audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+        
+        melodyIndex = (melodyIndex + 1) % melody.length;
+        setTimeout(playNextNote, 500);
+    }
+
+    function stopMusic() {
+        isMusicPlaying = false;
+    }
+
+    // Game Logic
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let animationId;
+    let score = 0;
+
+    const bird = {
+        x: 50,
+        y: 200,
+        w: 34,
+        h: 24,
+        gravity: 0.25,
+        velocity: 0,
+        jump: -4.5
+    };
+
+    let pipes = [];
+    const pipeWidth = 50;
+    const pipeGap = 150;
+    const pipeSpeed = 2;
+
+    function initGame() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        bird.y = canvas.height / 2;
+        bird.velocity = 0;
+        pipes = [];
+        score = 0;
+        spawnPipe();
+    }
+
+    function spawnPipe() {
+        const minHeight = 50;
+        const maxHeight = canvas.height - pipeGap - minHeight;
+        const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+        pipes.push({
+            x: canvas.width,
+            topHeight: topHeight,
+            passed: false
+        });
+    }
+
+    function update() {
+        bird.velocity += bird.gravity;
+        bird.y += bird.velocity;
+
+        if (bird.y + bird.h > canvas.height || bird.y < 0) {
+            endGame();
+            return;
+        }
+
+        if (frameCount % 100 === 0) spawnPipe();
+
+        for (let i = pipes.length - 1; i >= 0; i--) {
+            pipes[i].x -= pipeSpeed;
+
+            // Collision
+            if (bird.x + bird.w > pipes[i].x && bird.x < pipes[i].x + pipeWidth) {
+                if (bird.y < pipes[i].topHeight || bird.y + bird.h > pipes[i].topHeight + pipeGap) {
+                    endGame();
+                    return;
+                }
+            }
+
+            // Score
+            if (!pipes[i].passed && pipes[i].x + pipeWidth < bird.x) {
+                pipes[i].passed = true;
+                score++;
+                playSound(800, 'sine', 0.1, 0.05);
+            }
+
+            if (pipes[i].x < -pipeWidth) pipes.splice(i, 1);
+        }
+
+        draw();
+        frameCount++;
+        animationId = requestAnimationFrame(update);
+    }
+
+    let frameCount = 0;
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Pipes
+        ctx.fillStyle = '#2ecc71';
+        pipes.forEach(p => {
+            // Top
+            ctx.fillRect(p.x, 0, pipeWidth, p.topHeight);
+            // Bottom
+            ctx.fillRect(p.x, p.topHeight + pipeGap, pipeWidth, canvas.height);
+        });
+
+        // Draw Bird
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(bird.x, bird.y, bird.w, bird.h);
+        
+        // Eye
+        ctx.fillStyle = 'white';
+        ctx.fillRect(bird.x + 22, bird.y + 4, 6, 6);
+        ctx.fillStyle = 'black';
+        ctx.fillRect(bird.x + 26, bird.y + 6, 2, 2);
+
+        // Draw Score
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 30px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(score, canvas.width / 2, 50);
+    }
+
+    function endGame() {
+        cancelAnimationFrame(animationId);
+        playSound(150, 'sawtooth', 0.5, 0.1);
+        document.getElementById('gameScreen').classList.add('hidden');
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+        document.getElementById('finalScore').innerText = score;
+    }
+
+    // UI Controls
+    const homeScreen = document.getElementById('homeScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const settingsModal = document.getElementById('settingsModal');
+    const privacyModal = document.getElementById('privacyModal');
+
+    document.getElementById('playGame').addEventListener('click', () => {
+        homeScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        initGame();
+        frameCount = 0;
+        update();
+        startMusic();
+        playSound(600);
+    });
+
+    document.getElementById('restartGame').addEventListener('click', () => {
+        gameOverScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        initGame();
+        frameCount = 0;
+        update();
+        playSound(600);
+    });
+
+    // Settings
+    document.getElementById('openSettings').addEventListener('click', () => {
+        settingsModal.classList.remove('hidden');
+        playSound(1000, 'sine', 0.05);
+    });
+
+    document.getElementById('closeSettings').addEventListener('click', () => {
+        settingsModal.classList.add('hidden');
+        playSound(800, 'sine', 0.05);
+    });
+
+    document.getElementById('soundToggle').addEventListener('change', (e) => {
+        settings.sound = e.target.checked;
+        if (settings.sound) playSound(1000);
+    });
+
+    document.getElementById('musicToggle').addEventListener('change', (e) => {
+        settings.music = e.target.checked;
+        if (settings.music) {
+            startMusic();
+        } else {
+            stopMusic();
+        }
+    });
+
+    document.getElementById('openPrivacy').addEventListener('click', () => {
+        privacyModal.classList.remove('hidden');
+        playSound(1000, 'sine', 0.05);
+    });
+
+    document.getElementById('closePrivacy').addEventListener('click', () => {
+        privacyModal.classList.add('hidden');
+        playSound(800, 'sine', 0.05);
+    });
+
+    // Input
+    window.addEventListener('mousedown', () => {
+        if (!gameScreen.classList.contains('hidden')) {
+            bird.velocity = bird.jump;
+            playSound(400, 'sine', 0.1, 0.05);
+        }
+    });
+
+    window.addEventListener('touchstart', (e) => {
+        if (!gameScreen.classList.contains('hidden')) {
+            e.preventDefault();
+            bird.velocity = bird.jump;
+            playSound(400, 'sine', 0.1, 0.05);
+        }
+    }, { passive: false });
+
+    // Handle Resize
+    window.addEventListener('resize', () => {
+        if (!gameScreen.classList.contains('hidden')) {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+    });
+
+</script>
+
+</body>
+</html>

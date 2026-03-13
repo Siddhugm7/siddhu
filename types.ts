@@ -19,8 +19,39 @@ export interface Pipe {
   passed: boolean;
 }
 
+export interface Coin {
+  x: number;
+  y: number;
+  collected: boolean;
+  isSuper?: boolean;
+}
+
+export interface UserSettings {
+  musicEnabled: boolean;
+  vibrationEnabled: boolean;
+  effectsEnabled: boolean;
+}
+
+export interface Character {
+  id: string;
+  name: string;
+  src: string;
+  color: string;
+  unlocked: boolean;
+  price: number;
+}
+
 export interface GameState {
   status: GameStatus;
   score: number;
   highScore: number;
+  coins: number;
+  superCoins: number;
+  currentLevel: number;
+  unlockedLevels: number;
+  characterLevel: number;
+  selectedCharacterId: string;
+  hasPermit: boolean;
+  foodPrepared: boolean;
+  settings: UserSettings;
 }

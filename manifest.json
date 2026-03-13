@@ -1,0 +1,16 @@
+{
+  "name": "FlyBird",
+  "short_name": "FlyBird",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#4ec0ca",
+  "theme_color": "#0f172a",
+  "description": "Fly through pipes in FlyBird. Optimized for mobile and web.",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/yellowbird-midflap.png",
+      "sizes": "34x24",
+      "type": "image/png"
+    }
+  ]
+}
